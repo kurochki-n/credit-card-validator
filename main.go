@@ -14,13 +14,9 @@ type Bank struct {
 	BinTo   int
 }
 
-func extractBIN(cardNumber string) (int, error) {
-	bin, err := strconv.Atoi(cardNumber[:6])
-	if err != nil {
-		fmt.Println("Ошибка извлечения BIN:", err)
-		return -1, err
-	}
-	return bin, nil
+func extractBIN(cardNumber string) int {
+	bin, _ := strconv.Atoi(cardNumber[:6])
+	return bin
 }
 
 func identifyBank(bin int, banks []Bank) string {
@@ -35,7 +31,6 @@ func identifyBank(bin int, banks []Bank) string {
 func loadBankData(path string) ([]Bank, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		fmt.Println("Ошибка открытия:", err)
 		return nil, err
 	}
 	defer f.Close()
@@ -47,12 +42,10 @@ func loadBankData(path string) ([]Bank, error) {
 		parts := strings.Split(scanner.Text(), ",")
 		binFrom, err := strconv.Atoi(parts[1])
 		if err != nil {
-			fmt.Println(i, "Ошибка чтения BinFrom:", err)
 			continue
 		}
 		binTo, err := strconv.Atoi(parts[2])
 		if err != nil {
-			fmt.Println(i, "Ошибка чтения BinTo:", err)
 			continue
 		}
 		bank := Bank{Name: string(parts[0]), BinFrom: binFrom, BinTo: binTo}
@@ -60,7 +53,6 @@ func loadBankData(path string) ([]Bank, error) {
 		i++
 	}
 	if err := scanner.Err(); err != nil {
-		fmt.Println("Ошибка чтения:", err)
 		return nil, err
 	}
 
@@ -69,10 +61,14 @@ func loadBankData(path string) ([]Bank, error) {
 
 func validateLuhn(cardNumber string) bool {
 	sum := 0
+	second := false
 	for i := len(cardNumber) - 1; i >= 0; i-- {
-		intN := int(cardNumber[i])
-		if intN%2 == 1 {
+		intN := int(cardNumber[i] - '0')
+		if second {
 			intN *= 2
+			second = false
+		} else {
+			second = true
 		}
 		if intN > 9 {
 			intN -= 9
@@ -99,7 +95,6 @@ func getUserInput() (string, error) {
 	fmt.Print("Введите номер карты> ")
 	input, err := reader.ReadString('\n')
 	if err != nil {
-		fmt.Println("Ошибка ввода:", err)
 		return "", err
 	}
 	cleanInput := strings.TrimSpace(input)
@@ -117,6 +112,7 @@ func main() {
 	for {
 		cardNumber, err := getUserInput()
 		if err != nil {
+			fmt.Println("Номер карты недействителен")
 			continue
 		}
 		if len(cardNumber) == 0 {
@@ -127,10 +123,7 @@ func main() {
 			fmt.Println("Номер карты недействителен")
 			continue
 		}
-		bin, err := extractBIN(cardNumber)
-		if err != nil {
-			continue
-		}
+		bin := extractBIN(cardNumber)
 		bank := identifyBank(bin, banks)
 		fmt.Println("Банк:", bank)
 	}
