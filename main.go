@@ -60,21 +60,20 @@ func loadBankData(path string) ([]Bank, error) {
 }
 
 func validateLuhn(cardNumber string) bool {
+	parity := len(cardNumber) % 2
 	sum := 0
-	second := false
-	for i := len(cardNumber) - 1; i >= 0; i-- {
-		intN := int(cardNumber[i] - '0')
-		if second {
-			intN *= 2
-			second = false
-		} else {
-			second = true
+
+	for i := 0; i < len(cardNumber); i++ {
+		num := int(cardNumber[i] - '0')
+		if (i)%2 == parity {
+			num *= 2
+			if num > 9 {
+				num -= 9
+			}
 		}
-		if intN > 9 {
-			intN -= 9
-		}
-		sum += intN
+		sum += num
 	}
+	
 	return sum%10 == 0
 }
 
