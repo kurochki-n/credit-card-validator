@@ -17,7 +17,7 @@
 credit-card-validator/
 ├── main.go      # Основной код приложения
 ├── go.mod       # Модульная конфигурация Go
-├── banks.txt    # База данных банков с BIN диапазонами
+├── banks.csv    # База данных банков с BIN диапазонами
 └── README.md    # Документация
 ```
 
@@ -40,12 +40,22 @@ cd credit-card-validator
 go run main.go
 ```
 
+Можно указать путь к файлу с данными о банках:
+
+```bash
+go run main.go -banks путь/к/файлу/banks.csv
+```
+
 ### Сборка исполняемого файла
 
 ```bash
 go build -o credit-card-validator.exe  # Windows
 go build -o credit-card-validator      # Linux/macOS
 ```
+
+### Параметры командной строки
+
+- `-banks` - путь к файлу с данными о банках (по умолчанию: `banks.csv`)
 
 ## Примеры использования
 

@@ -2,23 +2,29 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
 )
 
+// Bank представляет банк с диапазоном BIN кодов.
 type Bank struct {
-	Name    string
-	BinFrom int
-	BinTo   int
+	Name    string // Название банка
+	BinFrom int    // Начало диапазона BIN
+	BinTo   int    // Конец диапазона BIN
 }
 
+// extractBIN извлекает первые 6 цифр номера карты (BIN - Bank Identification Number).
+// Возвращает BIN как целое число.
 func extractBIN(cardNumber string) int {
 	bin, _ := strconv.Atoi(cardNumber[:6])
 	return bin
 }
 
+// identifyBank определяет банк-эмитент по BIN коду.
+// Принимает BIN код и список банков, возвращает название банка или "Неизвестный банк".
 func identifyBank(bin int, banks []Bank) string {
 	for _, bank := range banks {
 		if bin >= bank.BinFrom && bin <= bank.BinTo {
@@ -28,6 +34,9 @@ func identifyBank(bin int, banks []Bank) string {
 	return "Неизвестный банк"
 }
 
+// loadBankData загружает данные о банках из файла.
+// Ожидает формат CSV: Название,BINОт,BINДо
+// Возвращает список банков или ошибку при проблемах чтения файла.
 func loadBankData(path string) ([]Bank, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -37,7 +46,6 @@ func loadBankData(path string) ([]Bank, error) {
 
 	scanner := bufio.NewScanner(f)
 	banks := []Bank{}
-	i := 0
 	for scanner.Scan() {
 		parts := strings.Split(scanner.Text(), ",")
 		binFrom, err := strconv.Atoi(parts[1])
@@ -48,9 +56,8 @@ func loadBankData(path string) ([]Bank, error) {
 		if err != nil {
 			continue
 		}
-		bank := Bank{Name: string(parts[0]), BinFrom: binFrom, BinTo: binTo}
+		bank := Bank{Name: parts[0], BinFrom: binFrom, BinTo: binTo}
 		banks = append(banks, bank)
-		i++
 	}
 	if err := scanner.Err(); err != nil {
 		return nil, err
@@ -59,6 +66,8 @@ func loadBankData(path string) ([]Bank, error) {
 	return banks, nil
 }
 
+// validateLuhn проверяет номер карты по алгоритму Луна (Luhn algorithm).
+// Возвращает true, если номер карты прошел валидацию контрольной суммы.
 func validateLuhn(cardNumber string) bool {
 	parity := len(cardNumber) % 2
 	sum := 0
@@ -73,10 +82,13 @@ func validateLuhn(cardNumber string) bool {
 		}
 		sum += num
 	}
-	
+
 	return sum%10 == 0
 }
 
+// validateInput проверяет формат входной строки номера карты.
+// Номер должен содержать от 13 до 19 цифр согласно стандарту ISO/IEC 7812.
+// Возвращает true, если формат корректен.
 func validateInput(input string) bool {
 	if len(input) < 13 || len(input) > 19 {
 		return false
@@ -89,6 +101,8 @@ func validateInput(input string) bool {
 	return true
 }
 
+// getUserInput читает номер карты из стандартного ввода.
+// Возвращает очищенную от пробельных символов строку или ошибку чтения.
 func getUserInput() (string, error) {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("Введите номер карты> ")
@@ -101,8 +115,12 @@ func getUserInput() (string, error) {
 }
 
 func main() {
+	// Определение флагов командной строки
+	banksFile := flag.String("banks", "banks.csv", "Путь к файлу с данными о банках")
+	flag.Parse()
+
 	fmt.Println("Credit card validator")
-	banks, err := loadBankData("banks.txt")
+	banks, err := loadBankData(*banksFile)
 	if err != nil {
 		fmt.Println("Ошибка чтения:", err)
 		return
